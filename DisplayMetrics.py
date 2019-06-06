@@ -40,7 +40,6 @@ def display_metrics(Prediction, Target, computingTime):
     for i in range(number_of_distances):
         diff.append(abs(prediction[i]-target[i]));
 
-
     SSIM = structural_similarity(pred_image, target_image);
     MAE = mean_absolute_error(target_image, pred_image);
     RMSE = root_mean_squared_error(target_image, pred_image);
@@ -64,7 +63,5 @@ def display_metrics(Prediction, Target, computingTime):
                                     'MAE', 'RMSE','Relative Error', 'ZNCC',
                                     'Time']);
 
-
-    #save(image, "./posterior-anterior/SSIM/prediction-rs-%d.mha" % i);
 
     return pred_image, df2

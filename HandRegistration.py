@@ -75,6 +75,11 @@ df.to_csv('./posterior-anterior/RMSE/results_SA.csv');
 
 # Optimising with Evolutionary Algorithm
 g_number_of_individuals = 500;
+g_iterations            = 40;
+
+g_max_mutation_sigma = 0.1;
+g_min_mutation_sigma = 0.01;
+
 df = pd.DataFrame();
 
 for i in range(number_of_iterations):
@@ -96,6 +101,19 @@ for i in range(number_of_iterations):
     optimiser.addGeneticOperator(blend_cross_over);
     optimiser.addGeneticOperator(elitism);
 
+    for i in range(g_iterations):
+        # Compute the value of the mutation variance
+        sigma = g_min_mutation_sigma + (g_iterations - 1 - i) / (g_iterations - 1) * (g_max_mutation_sigma - g_min_mutation_sigma);
+
+        # Set the mutation variance
+        gaussian_mutation.setMutationVariance(sigma);
+
+        # Run the optimisation loop
+        optimiser.runIteration();
+
+        # Print the current state in the console
+        optimiser.printCurrentStates(i + 1);
+        
     end=time.time();
     computing_time = end-start;
 

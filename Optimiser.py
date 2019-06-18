@@ -14,12 +14,13 @@ def frange(start, stop, step):
          i += step
 
 class Optimiser:
-    def __init__(self, anObjectiveFunction):
+    def __init__(self, anObjectiveFunction, initial_guess = None):
         self.objective_function     = anObjectiveFunction;
         self.best_solution          = None;
         self.current_solution_set   = [];
         self.visualisation_callback = None;
         self.verbose = False;
+        self.initial_guess = initial_guess;
 
     def runIteration(self):
         raise NotImplementedError("Subclasses should implement this!")
@@ -55,7 +56,7 @@ class Optimiser:
             Z.append(Temp_Z);
 
         self.objective_function.number_of_evaluation = 0;
-        
+
         # Plot a basic wireframe.
         ax.plot_wireframe(np.array(X), np.array(Y), np.array(Z), rstride=10, cstride=10)
 

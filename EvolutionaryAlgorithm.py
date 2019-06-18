@@ -1,4 +1,3 @@
-
 import random
 import Individual as IND
 import numpy as np
@@ -9,9 +8,9 @@ from Optimiser import *
 
 class EvolutionaryAlgorithm(Optimiser):
 
-    def __init__(self, aFitnessFunction, aNumberOfIndividuals, aGlobalFitnessFunction = 0, aUpdateIndividualContribution = 0):
+    def __init__(self, aFitnessFunction, aNumberOfIndividuals, aGlobalFitnessFunction = 0, aUpdateIndividualContribution = 0, initial_guess = None):
 
-        super().__init__(aFitnessFunction);
+        super().__init__(aFitnessFunction, initial_guess);
 
         # Get a SystemRandom instance out of random package
         self.system_random = random.SystemRandom();
@@ -33,6 +32,10 @@ class EvolutionaryAlgorithm(Optimiser):
 
         # Keep track of the best individual
         self.current_solution_set.append(IND.Individual(self.objective_function.number_of_dimensions, self.objective_function.boundary_set, aFitnessFunction));
+
+        # Add initial guess if any
+        if self.initial_guess != None:
+            self.current_solution_set.append(IND.Individual(self.objective_function.number_of_dimensions, self.objective_function.boundary_set, aFitnessFunction, self.initial_guess));
 
         # Create the population
         while (len(self.current_solution_set) < aNumberOfIndividuals):

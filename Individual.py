@@ -22,7 +22,8 @@ class Individual:
         self.boundary_set = copy.deepcopy(aBoundarySet)
 
         if aGeneSet != None:
-            self.genes = copy.deepcopy(aGeneSet);
+            for i in aGeneSet:
+                self.genes.append(i)
         else:
             # Initialise the Individual's genes and fitness
             for i in range(aNumberOfGenes):

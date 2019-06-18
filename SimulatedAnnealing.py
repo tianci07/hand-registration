@@ -1,13 +1,3 @@
-"""@package SimulatedAnnealing
-This package implements the simulated annealing (SA) optimisation method. SA is a metaheuristic to find the global optimum in an optimization problem.
-For details, see https://en.wikipedia.org/wiki/Simulated_annealing and  Kirkpatrick, S.; Gelatt Jr, C. D.; Vecchi, M. P. (1983). "Optimization by Simulated Annealing". Science. 220 (4598): 671–680. doi:10.1126/science.220.4598.671.
-@author Dr Franck P. Vidal, Bangor University
-@date 15th May 2019
-"""
-
-#################################################
-# import packages
-###################################################
 import math; # For exp
 import copy; # For deepcopy
 import random; # For uniform
@@ -49,18 +39,22 @@ class SimulatedAnnealing(Optimiser):
     # \param aCostFunction: The cost function to minimise
     # \param aTemperature: The initial temperature of the system (default value: 10,000)
     # \param aCoolingRate: The cooling rate (i.e. how fast the temperature will decrease) (default value: 0.003)
-    def __init__(self, aCostFunction, aTemperature = 10000, aCoolingRate = 0.003):
+    def __init__(self, aCostFunction, aTemperature = 10000, aCoolingRate = 0.003, initial_guess = None):
 
-        super().__init__(aCostFunction);
+        super().__init__(aCostFunction, initial_guess);
 
         # Get a SystemRandom instance out of random package
         self.system_random = random.SystemRandom();
 
+        # Add initial guess if any
+        if self.initial_guess != None:
+            self.current_solution = Solution(initial_guess);
         # Create the current solution from random
-        parameter_set = [];
-        for i in range(self.objective_function.number_of_dimensions):
-            parameter_set.append(self.system_random.uniform(self.objective_function.boundary_set[i][0], self.objective_function.boundary_set[i][1]));
-        self.current_solution = Solution(parameter_set);
+        else:
+            parameter_set = [];
+            for i in range(self.objective_function.number_of_dimensions):
+                parameter_set.append(self.system_random.uniform(self.objective_function.boundary_set[i][0], self.objective_function.boundary_set[i][1]));
+            self.current_solution = Solution(parameter_set);
 
         # and copy input parameters
         self.initial_temperature = aTemperature;

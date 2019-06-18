@@ -25,7 +25,7 @@ class PureRandomSearch:
         self.niter = iterations;
         self.flag = aFlag;
         self.number_of_distances = 2;
-        self.number_of_angles = 48;
+        self.number_of_angles = 22;
 
         if self.flag == 0:
             self.objective_value = 1;

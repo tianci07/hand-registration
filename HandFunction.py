@@ -30,16 +30,27 @@ class HandFunction(ObjectiveFunction):
 
         global number_of_angles;
 
-        self.number_of_dimensions = 50;
-        self.number_of_angles = 48;
+        self.number_of_dimensions = 24;
+        self.number_of_angles = 22;
         self.number_of_distances = 2;
 
         self.boundaries = [];
         self.boundaries.append([0.7, 0.95]);
         self.boundaries.append([10, 1000]);
 
+        self.boundaries.append([-20, 20]);
+        self.boundaries.append([-20, 20]);
+        self.boundaries.append([-20, 20]);
+
+        self.boundaries.append([-20, 0]);
+        self.boundaries.append([-20, 20]);
+        self.boundaries.append([-5, 5]);
+
         while len(self.boundaries) < self.number_of_dimensions:
-            self.boundaries.append([-20, 20]);
+            self.boundaries.append([-5, 5]);
+            self.boundaries.append([-20, 0]);
+            self.boundaries.append([-20, 0]);
+            self.boundaries.append([-20, 0]);
 
         super().__init__(len(self.boundaries),
                          self.boundaries,
@@ -63,9 +74,9 @@ class HandFunction(ObjectiveFunction):
 
         pred_image = bone_rotation(angle_list);
 
-        RMSE = root_mean_squared_error(self.target_image, pred_image);
+        MAE = mean_absolute_error(self.target_image, pred_image);
 
-        return RMSE
+        return MAE
 
 def createTarget():
     global target;
@@ -73,13 +84,9 @@ def createTarget():
     target_SOD = 100;
     target_SDD = 140;
     target_angles_pa = [0, 20, 0, -10, 0, 0,
-                        5, 0, 0, 5, 0, 0,
+                        5, 0, 0, 0, 0, 0,
                         0, 0, 0, 0, 0, 0,
-                        0, 0, 0, 0, 0, 0,
-                        0, 0, 0, 0, 0, 0,
-                        0, 0, 0, 0, 0, 0,
-                        0, 0, 0, 0, 0, 0,
-                        0, 0, 0, 0, 0, 0
+                        0, 0, 0, 0
                         ];
 
     target = [];

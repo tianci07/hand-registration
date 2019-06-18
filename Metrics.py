@@ -5,8 +5,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 def relative_error(y_true, y_pred):
     s = 0;
-    pix1 = 1536;
-    pix2 = 1536;
+    pix1 = y_true.shape[0];
+    pix2 = y_true.shape[1];
 
     for i in range(pix1):
         for j in range(pix2):
@@ -21,8 +21,8 @@ def zero_mean_normalised_cross_correlation(y_true, y_pred):
             mean(target_image))*(est_image-mean(est_image))}
     '''
     z = 0;
-    pix1 = 1536;
-    pix2 = 1024;
+    pix1 = y_true.shape[0];
+    pix2 = y_true.shape[1];
     mean1 = np.mean(y_true);
     mean2 = np.mean(y_pred);
     std1 = np.std(y_true);

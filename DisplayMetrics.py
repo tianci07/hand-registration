@@ -15,7 +15,7 @@ def setXRayParameters(SOD, SDD):
 
 def display_metrics(Prediction, Target, computingTime):
 
-    number_of_angles = 48;
+    number_of_angles = 22;
     number_of_distances = 2;
 
     prediction = Prediction;

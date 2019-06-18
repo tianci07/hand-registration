@@ -1,3 +1,5 @@
+# Original repository: https://github.com/Shatha1978/Optimisation-algorithm-examples
+
 import math; # For exp
 import copy; # For deepcopy
 import random; # For uniform

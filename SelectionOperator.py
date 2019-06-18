@@ -1,3 +1,5 @@
+# Original repository: https://github.com/Shatha1978/Optimisation-algorithm-examples
+
 class SelectionOperator:
 
     def __init__(self, name = "Unspecified selection operator"):

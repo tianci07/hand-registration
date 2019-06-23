@@ -1,12 +1,11 @@
 import numpy as np
-from skimage.measure import compare_ssim
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from skimage.measure import shannon_entropy
 from RotateBones import bone_rotation
 from Metrics import*
 import pandas as pd
 import matplotlib.pyplot as plt
 import gvxrPython3 as gvxr
-from scipy import stats
+
 
 def setXRayParameters(SOD, SDD):
     # Compute the source position in 3-D from the SOD
@@ -42,7 +41,7 @@ def display_metrics(Method, Prediction, Target, computingTime):
     for i in range(number_of_distances):
         diff.append(abs(prediction[i]-target[i]));
 
-    shannon_entropy = stats.entropy(pred_image);
+    entropy = shannon_entropy(pred_image);
     SSIM = structural_similarity(pred_image, target_image);
     MAE = mean_absolute_error(target_image, pred_image);
     RMSE = root_mean_squared_error(target_image, pred_image);
@@ -54,12 +53,12 @@ def display_metrics(Method, Prediction, Target, computingTime):
     print('Target: ', target);
     print('SOD and SDD errors: ', diff);
     print('Metrics: \n SSIM: %.8f \t MAE: %.8f \t RMSE: %.8f \t RE: %.8f \t ZNCC: %.8f \
-            \t shannon_entropy' %(SSIM, MAE, RMSE, RE, ZNCC));
+            \t Entropy: %8f' %(SSIM, MAE, RMSE, RE, ZNCC, entropy));
 
 
 
     row = [[method, prediction[0], diff[0], prediction[1], diff[1], pred_angles,
-            shannon_entropy, SSIM, MAE, RMSE, RE, ZNCC, computing_time]];
+            entropy, SSIM, MAE, RMSE, RE, ZNCC, computing_time]];
 
     df2 = pd.DataFrame(row, columns=['Methods', 'SOD', 'SOD Error','SDD',
                                     'SDD Error', 'Rotating Angles', 'Entropy',

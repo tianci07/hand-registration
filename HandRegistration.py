@@ -172,14 +172,14 @@ methods = [
         # 'Powell',
         'CG',
         # 'BFGS',
-        'L-BFGS-B',
+        # 'L-BFGS-B',
         # 'COBYLA'
     ];
 
 df = pd.DataFrame();
 df1 = pd.DataFrame();
 df2 = pd.DataFrame();
-df3 = pd.DataFrame();
+# df3 = pd.DataFrame();
 df4 = pd.DataFrame();
 df5 = pd.DataFrame();
 df6 = pd.DataFrame();
@@ -195,14 +195,16 @@ for run in range(15):
                                                             test_problem.boundary_set[i][1]
                                                             )
                                                             );
-    # Nelder-mean, CG, L-BFGS-B
+
     for method in methods:
 
         start = time.time();
         result = optimize.minimize(test_problem.minimisationFunction,
             initial_guess,
             method=method,
-            bounds=test_problem.boundaries);
+            bounds=test_problem.boundaries,
+            options={'maxiter': 500}
+            );
 
         end = time.time();
         computing_time = end-start;
@@ -214,7 +216,7 @@ for run in range(15):
             print(result);
 
             plt.imsave("./posterior-anterior/MAE/%s-%d" % (method, (run+1)), pred_image, cmap='Greys_r');
-            gvxr.saveLastXRayImage("./posterior-anterior/MAE/%s_%d.mha" % (method, (run+1)));
+            gvxr.saveLastXRayImage("./posterior-anterior/MAE/%s-%d.mha" % (method, (run+1)));
 
         elif method == 'CG':
 
@@ -223,16 +225,17 @@ for run in range(15):
             print(result);
 
             plt.imsave("./posterior-anterior/MAE/%s-%d" % (method, (run+1)), pred_image, cmap='Greys_r');
-            gvxr.saveLastXRayImage("./posterior-anterior/MAE/%s_%d.mha" % (method, (run+1)));
+            gvxr.saveLastXRayImage("./posterior-anterior/MAE/%s-%d.mha" % (method, (run+1)));
 
-        elif method == 'L-BFGS-B':
+        # elif method == 'L-BFGS-B':
+        #
+        #     pred_image, df_3 = display_metrics(method, result.x, target, computing_time);
+        #     df3 = df3.append(df_3, ignore_index=True);
+        #     print(result);
+        #
+        #     plt.imsave("./posterior-anterior/MAE/%s-%d" % (method, (run+1)), pred_image, cmap='Greys_r');
+        #     gvxr.saveLastXRayImage("./posterior-anterior/MAE/%s_%d.mha" % (method, (run+1)));
 
-            pred_image, df_3 = display_metrics(method, result.x, target, computing_time);
-            df3 = df3.append(df_3, ignore_index=True);
-            print(result);
-
-            plt.imsave("./posterior-anterior/MAE/%s-%d" % (method, (run+1)), pred_image, cmap='Greys_r');
-            gvxr.saveLastXRayImage("./posterior-anterior/MAE/%s_%d.mha" % (method, (run+1)));
     # PRS
     method = 'PRS';
     start = time.time();
@@ -241,7 +244,7 @@ for run in range(15):
                                         objective_function.boundaries,
                                         objective_function,
                                         0,
-                                        1000);
+                                        500);
     end=time.time();
     computing_time = end-start;
     pred_image, df_4 = display_metrics(method, optimiser.best_solution, target, computing_time);
@@ -254,8 +257,8 @@ for run in range(15):
     method = 'SA';
     start = time.time();
     objective_function = HandFunction(target_image);
-    optimiser = SimulatedAnnealing(objective_function, 20000, 0.01, initial_guess=initial_guess);
-    optimiser.run();
+    optimiser = SimulatedAnnealing(objective_function, 10000, 0.018, initial_guess=initial_guess);
+    optimiser.run(aVerboseFlag=True);
 
     end=time.time();
     computing_time = end-start;
@@ -267,8 +270,8 @@ for run in range(15):
 
     # EA
     method = 'EA';
-    g_number_of_individuals = 50;
-    g_iterations            = 10;
+    g_number_of_individuals = 25;
+    g_iterations            = 20;
 
     g_max_mutation_sigma = 0.1;
     g_min_mutation_sigma = 0.01;
@@ -318,8 +321,8 @@ print("\nNelder-Mead: Mean(Entropy):%8f, STD(Entropy):%8f, Mean(Time):%8f, STD(T
 print("\nCG: Mean(MAE):%8f, STD(MAE):%8f, Mean(ZNCC):%8f, STD(ZNCC):%8f \n" % (df2["MAE"].mean(), df2["MAE"].std(), df2["ZNCC"].mean(), df2["ZNCC"].std()));
 print("\nCG: Mean(Entropy):%8f, STD(Entropy):%8f, Mean(Time):%8f, STD(Time):%8f \n" % (df2["Entropy"].mean(), df2["Entropy"].std(), df2["Time"].mean(), df2["Time"].std()));
 
-print("\nL-BFGS-B: Mean(MAE):%8f, STD(MAE):%8f, Mean(ZNCC):%8f, STD(ZNCC):%8f \n" % (df3["MAE"].mean(), df3["MAE"].std(), df3["ZNCC"].mean(), df3["ZNCC"].std()));
-print("\nL-BFGS-B: Mean(Entropy):%8f, STD(Entropy):%8f, Mean(Time):%8f, STD(Time):%8f \n" % (df3["Entropy"].mean(), df3["Entropy"].std(), df3["Time"].mean(), df3["Time"].std()));
+# print("\nL-BFGS-B: Mean(MAE):%8f, STD(MAE):%8f, Mean(ZNCC):%8f, STD(ZNCC):%8f \n" % (df3["MAE"].mean(), df3["MAE"].std(), df3["ZNCC"].mean(), df3["ZNCC"].std()));
+# print("\nL-BFGS-B: Mean(Entropy):%8f, STD(Entropy):%8f, Mean(Time):%8f, STD(Time):%8f \n" % (df3["Entropy"].mean(), df3["Entropy"].std(), df3["Time"].mean(), df3["Time"].std()));
 
 print("\nPRS: Mean(MAE):%8f, STD(MAE):%8f, Mean(ZNCC):%8f, STD(ZNCC):%8f \n" % (df4["MAE"].mean(), df4["MAE"].std(), df4["ZNCC"].mean(), df4["ZNCC"].std()));
 print("\nPRS: Mean(Entropy):%8f, STD(Entropy):%8f, Mean(Time):%8f, STD(Time):%8f \n" % (df4["Entropy"].mean(), df4["Entropy"].std(), df4["Time"].mean(), df4["Time"].std()));
@@ -332,7 +335,7 @@ print("\nEA: Mean(Entropy):%8f, STD(Entropy):%8f, Mean(Time):%8f, STD(Time):%8f 
 
 df = df.append(df1, ignore_index=True);
 df = df.append(df2, ignore_index=True);
-df = df.append(df3, ignore_index=True);
+# df = df.append(df3, ignore_index=True);
 df = df.append(df4, ignore_index=True);
 df = df.append(df5, ignore_index=True);
 df = df.append(df6, ignore_index=True);

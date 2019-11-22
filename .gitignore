@@ -1,0 +1,12 @@
+# Test on real X-ray images
+00382-s1-neg2/
+00382-s1-neg3/
+
+# Ignore cache
+__pycache__
+
+# Ignore result folder
+posterior-anterior/
+
+# Ignore local files
+absError.py

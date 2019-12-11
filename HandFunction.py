@@ -155,16 +155,7 @@ class HandFunction(ObjectiveFunction):
 
             angle_list.append(aSolution[i]);
 
-        if self.finger == 'Thumb':
-            pred_image = bone_rotation(angle_list, self.finger);
-        elif self.finger == 'Index':
-            pred_image = bone_rotation(angle_list, self.finger);
-        elif self.finger == 'Middle':
-            pred_image = bone_rotation(angle_list, self.finger);
-        elif self.finger == 'Ring':
-            pred_image = bone_rotation(angle_list, self.finger);
-        elif self.finger == 'Little':
-            pred_image = bone_rotation(angle_list, self.finger);
+        pred_image = bone_rotation(angle_list, self.finger);
 
         MAE = mean_absolute_error(self.target_image, pred_image);
 

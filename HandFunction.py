@@ -13,7 +13,8 @@ import time
 import PureRandomSearch as PRS
 from DisplayMetrics import *
 import pandas as pd
-
+from sklearn import preprocessing
+from sklearn.metrics import mean_absolute_error
 
 number_of_angles = 0;
 
@@ -24,33 +25,63 @@ def setXRayParameters(SOD, SDD):
     gvxr.setDetectorPosition(SOD - SDD, 0.0, 0.0, "cm");
     gvxr.usePointSource();
 
-class HandFunction(ObjectiveFunction):
+def setXRayEnvironment():
+
+    gvxr.createWindow();
+    gvxr.setWindowSize(512, 512);
+
+    #gvxr.usePointSource();
+    gvxr.setMonoChromatic(80, "keV", 1000);
+
+    gvxr.setDetectorUpVector(0, 0, -1);
+    gvxr.setDetectorNumberOfPixels(768, 1024);
+    gvxr.setDetectorPixelSize(0.5, 0.5, "mm"); # 5 dpi
+
+    setXRayParameters(10.0, 100.0);
+
+    gvxr.loadSceneGraph("./hand.dae", "m");
+    node_label_set = [];
+    node_label_set.append('root');
+
+
+    # The list is not empty
+    while (len(node_label_set)):
+
+        # Get the last node
+        last_node = node_label_set[-1];
+
+        # Initialise the material properties
+        # print("Set ", label, "'s Hounsfield unit");
+        # gvxr.setHU(label, 1000)
+        Z = gvxr.getElementAtomicNumber("H");
+        gvxr.setElement(last_node, gvxr.getElementName(Z));
+
+        # Change the node colour to a random colour
+        gvxr.setColour(last_node, random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1), 1.0);
+
+        # Remove it from the list
+        node_label_set.pop();
+
+        # Add its Children
+        for i in range(gvxr.getNumberOfChildren(last_node)):
+            node_label_set.append(gvxr.getChildLabel(last_node, i));
+
+    gvxr.moveToCentre('root');
+    gvxr.disableArtefactFiltering();
+    gvxr.rotateNode('root', -90, 1, 0, 0);
+
+class DistanceAndRootFunction(ObjectiveFunction):
 
     def __init__(self, aTargetImage):
-
-        global number_of_angles;
-
-        self.number_of_dimensions = 24;
-        self.number_of_angles = 22;
-        self.number_of_distances = 2;
-
+        self.root_angles = 3;
+        self.number_of_distances=2;
         self.boundaries = [];
         self.boundaries.append([0.7, 0.95]);
         self.boundaries.append([10, 1000]);
 
         self.boundaries.append([-20, 20]);
         self.boundaries.append([-20, 20]);
-        self.boundaries.append([-20, 20]);
-
-        self.boundaries.append([-20, 0]);
-        self.boundaries.append([-20, 20]);
         self.boundaries.append([-5, 5]);
-
-        while len(self.boundaries) < self.number_of_dimensions:
-            self.boundaries.append([-5, 5]);
-            self.boundaries.append([-20, 0]);
-            self.boundaries.append([-20, 0]);
-            self.boundaries.append([-20, 0]);
 
         super().__init__(len(self.boundaries),
                          self.boundaries,
@@ -66,13 +97,74 @@ class HandFunction(ObjectiveFunction):
 
         angle_list = [];
 
-        for i in range(self.number_of_angles):
+        for i in range(self.root_angles):
 
             angle_list.append(aSolution[i + self.number_of_distances]);
 
         setXRayParameters(SOD, SDD);
 
-        pred_image = bone_rotation(angle_list);
+        pred_image = bone_rotation(angle_list, 'root');
+
+        MAE = mean_absolute_error(self.target_image, pred_image);
+
+        return MAE
+
+class HandFunction(ObjectiveFunction):
+
+    def __init__(self, aTargetImage, aFinger):
+
+        '''
+        Optimising each finger, 3 parameters for Thumb and 4 parameters for others.
+
+        Maximising the negative of
+
+        '''
+
+        self.finger = aFinger;
+        self.boundaries = [];
+
+        if self.finger == 'Thumb':
+
+            self.boundaries.append([-20, 0]);
+            self.boundaries.append([-20, 20]);
+            self.boundaries.append([-5, 5]);
+
+            self.number_of_angles = 3;
+
+        else:
+
+            self.boundaries.append([-5, 5]);
+            self.boundaries.append([-20, 0]);
+            self.boundaries.append([-20, 0]);
+            self.boundaries.append([-20, 0]);
+
+            self.number_of_angles = 4;
+
+        super().__init__(len(self.boundaries),
+                         self.boundaries,
+                         self.objectiveFunction,
+                         1);
+
+        self.target_image = aTargetImage;
+
+    def objectiveFunction(self, aSolution):
+
+        angle_list = [];
+
+        for i in range(self.number_of_angles):
+
+            angle_list.append(aSolution[i]);
+
+        if self.finger == 'Thumb':
+            pred_image = bone_rotation(angle_list, self.finger);
+        elif self.finger == 'Index':
+            pred_image = bone_rotation(angle_list, self.finger);
+        elif self.finger == 'Middle':
+            pred_image = bone_rotation(angle_list, self.finger);
+        elif self.finger == 'Ring':
+            pred_image = bone_rotation(angle_list, self.finger);
+        elif self.finger == 'Little':
+            pred_image = bone_rotation(angle_list, self.finger);
 
         MAE = mean_absolute_error(self.target_image, pred_image);
 

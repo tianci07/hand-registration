@@ -1,5 +1,6 @@
 import gvxrPython3 as gvxr
 import numpy as np
+from sklearn import preprocessing
 
 def getLocalTransformationMatrixSet():
     # Parse the scenegraph
@@ -31,35 +32,74 @@ def setLocalTransformationMatrixSet(aMatrixSet):
     for key in aMatrixSet:
         gvxr.setLocalTransformationMatrix(key, aMatrixSet[key]);
 
-def updateLocalTransformationMatrixSet(angles):
-        gvxr.rotateNode('root', angles[0], 1, 0, 0);
-        gvxr.rotateNode('root', angles[1], 0, 1, 0);
-        gvxr.rotateNode('root', angles[2], 0, 0, 1);
+def updateLocalTransformationMatrixSet(angles,  finger):
 
-        gvxr.rotateNode('node-Thu_Meta', angles[3], 1, 0, 0);
-        gvxr.rotateNode('node-Thu_Meta', angles[4], 0, 1, 0);
-        gvxr.rotateNode('node-Thu_Prox', angles[5], 1, 0, 0);
+        if finger == 'Root':
 
-        gvxr.rotateNode('node-Lit_Prox', angles[6], 1, 0, 0);
-        gvxr.rotateNode('node-Lit_Prox', angles[7], 0, 1, 0);
-        gvxr.rotateNode('node-Lit_Midd', angles[8], 0, 1, 0);
-        gvxr.rotateNode('node-Lit_Dist', angles[9], 0, 1, 0);
+            gvxr.rotateNode('root', angles[0], 1, 0, 0);
+            gvxr.rotateNode('root', angles[1], 0, 1, 0);
+            gvxr.rotateNode('root', angles[2], 0, 0, 1);
 
+        elif finger == 'Thumb':
 
-        gvxr.rotateNode('node-Thi_Prox', angles[10], 1, 0, 0);
-        gvxr.rotateNode('node-Thi_Prox', angles[11], 0, 1, 0);
-        gvxr.rotateNode('node-Thi_Midd', angles[12], 0, 1, 0);
-        gvxr.rotateNode('node-Thi_Dist', angles[13], 0, 1, 0);
+            gvxr.rotateNode('node-Thu_Meta', angles[0], 1, 0, 0);
+            gvxr.rotateNode('node-Thu_Meta', angles[1], 0, 1, 0);
+            gvxr.rotateNode('node-Thu_Prox', angles[2], 1, 0, 0);
 
-        gvxr.rotateNode('node-Mid_Prox', angles[14], 1, 0, 0);
-        gvxr.rotateNode('node-Mid_Prox', angles[15], 0, 1, 0);
-        gvxr.rotateNode('node-Mid_Midd', angles[16], 0, 1, 0);
-        gvxr.rotateNode('node-Mid_Dist', angles[17], 0, 1, 0);
+        elif finger == 'Little':
 
-        gvxr.rotateNode('node-Ind_Prox', angles[18], 1, 0, 0);
-        gvxr.rotateNode('node-Ind_Prox', angles[19], 0, 1, 0);
-        gvxr.rotateNode('node-Ind_Midd', angles[20], 0, 1, 0);
-        gvxr.rotateNode('node-Ind_Dist', angles[21], 0, 1, 0);
+            gvxr.rotateNode('node-Lit_Prox', angles[0], 1, 0, 0);
+            gvxr.rotateNode('node-Lit_Prox', angles[1], 0, 1, 0);
+            gvxr.rotateNode('node-Lit_Midd', angles[2], 0, 1, 0);
+            gvxr.rotateNode('node-Lit_Dist', angles[3], 0, 1, 0);
+
+        elif finger == 'Ring':
+            gvxr.rotateNode('node-Thi_Prox', angles[0], 1, 0, 0);
+            gvxr.rotateNode('node-Thi_Prox', angles[1], 0, 1, 0);
+            gvxr.rotateNode('node-Thi_Midd', angles[2], 0, 1, 0);
+            gvxr.rotateNode('node-Thi_Dist', angles[3], 0, 1, 0);
+
+        elif finger == 'Middle':
+            gvxr.rotateNode('node-Mid_Prox', angles[0], 1, 0, 0);
+            gvxr.rotateNode('node-Mid_Prox', angles[1], 0, 1, 0);
+            gvxr.rotateNode('node-Mid_Midd', angles[2], 0, 1, 0);
+            gvxr.rotateNode('node-Mid_Dist', angles[3], 0, 1, 0);
+
+        elif finger == 'Index':
+            gvxr.rotateNode('node-Ind_Prox', angles[0], 1, 0, 0);
+            gvxr.rotateNode('node-Ind_Prox', angles[1], 0, 1, 0);
+            gvxr.rotateNode('node-Ind_Midd', angles[2], 0, 1, 0);
+            gvxr.rotateNode('node-Ind_Dist', angles[3], 0, 1, 0);
+
+        elif finger == 'All':
+
+            gvxr.rotateNode('root', angles[0], 1, 0, 0);
+            gvxr.rotateNode('root', angles[1], 0, 1, 0);
+            gvxr.rotateNode('root', angles[2], 0, 0, 1);
+
+            gvxr.rotateNode('node-Thu_Meta', angles[3], 1, 0, 0);
+            gvxr.rotateNode('node-Thu_Meta', angles[4], 0, 1, 0);
+            gvxr.rotateNode('node-Thu_Prox', angles[5], 1, 0, 0);
+
+            gvxr.rotateNode('node-Ind_Prox', angles[6], 1, 0, 0);
+            gvxr.rotateNode('node-Ind_Prox', angles[7], 0, 1, 0);
+            gvxr.rotateNode('node-Ind_Midd', angles[8], 0, 1, 0);
+            gvxr.rotateNode('node-Ind_Dist', angles[9], 0, 1, 0);
+
+            gvxr.rotateNode('node-Mid_Prox', angles[10], 1, 0, 0);
+            gvxr.rotateNode('node-Mid_Prox', angles[11], 0, 1, 0);
+            gvxr.rotateNode('node-Mid_Midd', angles[12], 0, 1, 0);
+            gvxr.rotateNode('node-Mid_Dist', angles[13], 0, 1, 0);
+
+            gvxr.rotateNode('node-Thi_Prox', angles[14], 1, 0, 0);
+            gvxr.rotateNode('node-Thi_Prox', angles[15], 0, 1, 0);
+            gvxr.rotateNode('node-Thi_Midd', angles[16], 0, 1, 0);
+            gvxr.rotateNode('node-Thi_Dist', angles[17], 0, 1, 0);
+
+            gvxr.rotateNode('node-Lit_Prox', angles[18], 1, 0, 0);
+            gvxr.rotateNode('node-Lit_Prox', angles[19], 0, 1, 0);
+            gvxr.rotateNode('node-Lit_Midd', angles[20], 0, 1, 0);
+            gvxr.rotateNode('node-Lit_Dist', angles[21], 0, 1, 0);
 
 
 # def updateLocalTransformationMatrixSet(angles):
@@ -128,14 +168,22 @@ def updateLocalTransformationMatrixSet(angles):
 #         # gvxr.rotateNode('node-Ind_Dist', angles[47], 0, 0, 1);
 #
 #
-def bone_rotation(angles):
+def bone_rotation(angles, finger):
+    '''
+    @Params:
+        Angles: list of rotating angles.
+
+        finger: choice of "Root", "Thumb", "Index", "Middle", "Ring", "Little",
+                or "All"
+    '''
 
     matrix_set = getLocalTransformationMatrixSet();
 
-    updateLocalTransformationMatrixSet(angles);
+    updateLocalTransformationMatrixSet(angles, finger);
 
     x_ray_image = gvxr.computeXRayImage();
-    image = np.array(x_ray_image);
+    # image = np.array(x_ray_image);
+    image = preprocessing.scale(x_ray_image);
 
     setLocalTransformationMatrixSet(matrix_set);
 

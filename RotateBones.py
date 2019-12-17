@@ -100,8 +100,6 @@ def updateLocalTransformationMatrixSet(angles,  finger):
             gvxr.rotateNode('node-Lit_Prox', angles[19], 0, 1, 0);
             gvxr.rotateNode('node-Lit_Midd', angles[20], 0, 1, 0);
             gvxr.rotateNode('node-Lit_Dist', angles[21], 0, 1, 0);
-
-
 # def updateLocalTransformationMatrixSet(angles):
 #         gvxr.rotateNode('root', angles[0], 1, 0, 0);
 #         gvxr.rotateNode('root', angles[1], 0, 1, 0);
@@ -174,12 +172,13 @@ def bone_rotation(angles, finger):
         Angles: list of rotating angles.
 
         finger: choice of "Root", "Thumb", "Index", "Middle", "Ring", "Little",
-                or "All"
+                "None" or "All"
     '''
 
     matrix_set = getLocalTransformationMatrixSet();
 
-    updateLocalTransformationMatrixSet(angles, finger);
+    if finger != 'None':
+        updateLocalTransformationMatrixSet(angles, finger);
 
     x_ray_image = gvxr.computeXRayImage();
     # image = np.array(x_ray_image);

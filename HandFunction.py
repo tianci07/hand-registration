@@ -109,14 +109,14 @@ class DistanceAndRootFunction(ObjectiveFunction):
 
         return MAE
 
-class HandFunction(ObjectiveFunction):
+class AngleFunction(ObjectiveFunction):
 
     def __init__(self, aTargetImage, aFinger):
 
         '''
         Optimising each finger, 3 parameters for Thumb and 4 parameters for others.
 
-        Maximising the negative of
+        Maximising the negative of MAE error.
 
         '''
 
@@ -160,6 +160,68 @@ class HandFunction(ObjectiveFunction):
         MAE = mean_absolute_error(self.target_image, pred_image);
 
         return MAE
+
+class HandFunction(ObjectiveFunction):
+
+    def __init__(self, aTargetImage, aNumberOfDimension):
+
+        self.number_of_dimensions = aNumberOfDimension;
+        self.number_of_distances = 2;
+        self.number_of_angles = self.number_of_dimensions-self.number_of_distances;
+
+        self.boundaries = [];
+        while len(self.boundaries)<self.number_of_dimensions:
+            self.boundaries.append([0.7, 0.95]);
+            self.boundaries.append([10, 1000]);
+
+            self.boundaries.append([-20, 20]);
+            self.boundaries.append([-20, 20]);
+            self.boundaries.append([-20, 20]);
+
+            self.boundaries.append([-20, 0]);
+            self.boundaries.append([-20, 20]);
+            self.boundaries.append([-5, 5]);
+
+            while len(self.boundaries) < self.number_of_dimensions:
+
+                self.boundaries.append([-5, 5]);
+                self.boundaries.append([-20, 0]);
+                self.boundaries.append([-20, 0]);
+                self.boundaries.append([-20, 0]);
+
+        super().__init__(len(self.boundaries),
+                         self.boundaries,
+                         self.objectiveFunction,
+                         1);
+
+        self.target_image = aTargetImage;
+
+    def objectiveFunction(self, aSolution):
+
+        SOD = aSolution[0]*aSolution[1];
+        SDD = aSolution[1];
+
+        setXRayParameters(SOD, SDD);
+
+        angle_list = [];
+
+        if self.number_of_angles == 0:
+            pred_image = bone_rotation(angle_list, 'None');
+        else:
+
+            for i in range(self.number_of_angles):
+
+                angle_list.append(aSolution[i+self.number_of_distances]);
+
+            while len(angle_list) < 22:
+                angle_list.append(0.)
+
+            pred_image = bone_rotation(angle_list, 'All');
+
+        MAE = mean_absolute_error(self.target_image, pred_image);
+
+        return MAE
+
 
 def createTarget():
     global target;

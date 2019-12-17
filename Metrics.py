@@ -13,6 +13,7 @@ def relative_error(y_true, y_pred):
             s += abs((y_true[i,j] - y_pred[i,j])/y_true[i,j]);
     s = s/(pix1*pix2);
 
+    # s = np.sum((y_true-y_pred)/y_true)/(y_true.shape[0]*y_true.shape[1]);
     return s
 
 def zero_mean_normalised_cross_correlation(y_true, y_pred):
@@ -32,6 +33,8 @@ def zero_mean_normalised_cross_correlation(y_true, y_pred):
         for j in range(pix2):
             z += (y_true[i,j]-mean1)*(y_pred[i,j]-mean2);
     z = z/(pix1*pix2*std1*std2);
+
+    # z = np.sum((y_true-y_true.mean())/(y_pred-y_pred.mean()))/(y_true.shape[0]*y_true.shape[1]*y_true.mean()*y_pred.mean())
 
     return z
 

@@ -54,26 +54,19 @@ setXRayEnvironment();
 # gvxr.scaleNode('node-Lit_Midd', 1, 1, 1.126, 'mm');
 # gvxr.scaleNode('node-Lit_Dist', 1, 1, 1.070, 'mm');
 
-target_image = cv2.imread("./00382-s1-neg3.png", 0);
-# target_image = preprocessing.scale(target_image);
-
-# th = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,2);
-# ret,th = cv2.threshold(img,127,255,0)
-# contours,hierarchy = cv2.findContours(th, 1, 2)
-# cnt = contours[0]
-# x,y,w,h = cv2.boundingRect(cnt)
-# cv2.rectangle(th,(x,y),(x+w,y+h),(0,255,0),1)
-# cv2.imshow('draw contours',th)
-# cv2.waitKey(0);
+target_image = cv2.imread("./00382-s1-neg2.png", 0);
+target_image = preprocessing.scale(target_image);
 
 df = pd.DataFrame();
+matrix_set_original = getLocalTransformationMatrixSet();
 
 runs = 15;
 for run in range(runs):
+
     # 1st optimisation for distance SOD and SDD, and root rotation
     method = 'EA';
-    g_number_of_individuals = 50;
-    g_iterations            = 40;
+    g_number_of_individuals = 25;
+    g_iterations            = 20;
 
     g_max_mutation_sigma = 0.1;
     g_min_mutation_sigma = 0.01;
@@ -127,6 +120,9 @@ for run in range(runs):
     SDD = best_solution[1];
     setXRayParameters(SOD, SDD);
 
+    # Update transformation matrix
+    updateLocalTransformationMatrixSet(best_root, 'Root');
+
     fingers = ['Thumb', 'Index', 'Middle', 'Ring', 'Little'];
 
     for finger in fingers:
@@ -136,7 +132,7 @@ for run in range(runs):
         g_number_of_individuals = 25;
         g_iterations            = 20;
 
-        objective_function = HandFunction(target_image, finger);
+        objective_function = AngleFunction(target_image, finger);
         optimiser = EvolutionaryAlgorithm(objective_function, g_number_of_individuals);
         optimiser.setSelectionOperator(RankSelection());
 
@@ -174,16 +170,13 @@ for run in range(runs):
             best_solution.append(optimiser.best_solution.parameter_set[b]);
             best_finger.append(optimiser.best_solution.parameter_set[b]);
 
+        updateLocalTransformationMatrixSet(best_finger, finger);
 
         overall_computing_time += computing_time;
 
-
-    best_angles = [];
-    for angle in range(len(best_solution)-number_of_distances):
-        best_angles.append(best_solution[angle+number_of_distances])
-
-    pred_image = bone_rotation(best_angles, 'All');
-    plt.imsave("./00382-s1-neg3/MAE-rescaled/EA-%d" % (run+1), pred_image, cmap='Greys_r');
+    pred_image = np.array(gvxr.computeXRayImage());
+    pred_image = preprocessing.scale(pred_image);
+    plt.imsave("./00382-s1-neg2/MAE/EA-%d" % (run+1), pred_image, cmap='Greys_r');
 
     MAE = mean_absolute_error(target_image, pred_image);
     ZNCC = zero_mean_normalised_cross_correlation(target_image, pred_image);
@@ -192,7 +185,7 @@ for run in range(runs):
     df = df.append(df2, ignore_index=True);
 
     error_map_EA = abs(target_image-pred_image);
-    plt.imsave("./00382-s1-neg3/MAE-rescaled/error-map-EA-%d.png" %(run+1), error_map_EA, cmap='Greys_r');
+    plt.imsave("./00382-s1-neg2/MAE/error-map-EA-%d.png" % (run+1), error_map_EA, cmap='Greys_r');
 
     width, height = target_image.shape;
     correlation_map_EA = np.zeros((width, height));
@@ -201,9 +194,153 @@ for run in range(runs):
 
             correlation_map_EA[w][h] = target_image[w][h]*pred_image[w][h];
 
-    plt.imsave("./00382-s1-neg3/MAE-rescaled/correlation-map-EA-%d.png" %(run+1), correlation_map_EA, cmap='Greys_r');
+    plt.imsave("./00382-s1-neg2/MAE/correlation-map-EA-%d.png" % (run+1) , correlation_map_EA, cmap='Greys_r');
 
-df.to_csv("./00382-s1-neg3/MAE-rescaled/results.csv");
+    setLocalTransformationMatrixSet(matrix_set_original);
+
+df.to_csv("./00382-s1-neg2/MAE/results.csv");
+
+# ------------------------------------------------------------------
+# Optimising 7 sections and updating previous solution if better solution found.
+# ------------------------------------------------------------------
+
+df = pd.DataFrame();
+run = 0;
+matrix_set_original = getLocalTransformationMatrixSet();
+for run in range(15):
+    params = ['Distance', 'Root', 'Thumb', 'Index', 'Middle', 'Ring', 'Little'];
+    number_of_distances = 2;
+    number_of_angles =22;
+    d = 2;
+    current_objective_value = 10.;
+    overall_computing_time = 0;
+
+    for param in params:
+
+        method = 'EA';
+        best_finger = [];
+        if param == 'Root' or param == 'Thumb':
+            d += 3;
+
+        else:
+            d += 4;
+
+        g_number_of_individuals = 25;
+        g_iterations            = 20;
+
+        g_max_mutation_sigma = 0.1;
+        g_min_mutation_sigma = 0.01;
+
+        matrix_set = getLocalTransformationMatrixSet();
+
+
+        start = time.time();
+
+        objective_function = HandFunction(target_image, d);
+        optimiser = EvolutionaryAlgorithm(objective_function, g_number_of_individuals);
+        optimiser.setSelectionOperator(RankSelection());
+
+        # Create the genetic operators
+        elitism = ElitismOperator(0.1);
+        new_blood = NewBloodOperator(0.1);
+        gaussian_mutation = GaussianMutationOperator(0.1, 0.2);
+        blend_cross_over = BlendCrossoverOperator(0.6, gaussian_mutation);
+
+        # Add the genetic operators to the EA
+        optimiser.addGeneticOperator(new_blood);
+        optimiser.addGeneticOperator(gaussian_mutation);
+        optimiser.addGeneticOperator(blend_cross_over);
+        optimiser.addGeneticOperator(elitism);
+
+        i=0;
+        for i in range(g_iterations):
+            # Compute the value of the mutation variance
+            sigma = g_min_mutation_sigma + (g_iterations - 1 - i) / (g_iterations - 1) * (g_max_mutation_sigma - g_min_mutation_sigma);
+
+            # Set the mutation variance
+            gaussian_mutation.setMutationVariance(sigma);
+
+            # Run the optimisation loop
+            optimiser.runIteration();
+
+            # Print the current state in the console
+            optimiser.printCurrentStates(i + 1);
+
+        end=time.time();
+        computing_time = end-start;
+
+        current_best_solution = copy.deepcopy(optimiser.best_solution.parameter_set);
+
+        if param != 'Distance':
+
+            if param == 'Root':
+                best_finger = current_best_solution[2:5];
+            elif param == 'Thumb':
+                best_finger = current_best_solution[5:8];
+            elif param == 'Index':
+                best_finger = current_best_solution[8:12];
+            elif param == 'Middle':
+                best_finger = current_best_solution[12:16];
+            elif param == 'Ring':
+                best_finger = current_best_solution[16:20];
+            elif param == 'Little':
+                best_finger = current_best_solution[20:24];
+
+            updateLocalTransformationMatrixSet(best_finger, param);
+
+        pred_image = gvxr.computeXRayImage();
+        pred_image = preprocessing.scale(pred_image);
+        objective_value = mean_absolute_error(target_image, pred_image);
+
+
+        if current_objective_value > objective_value:
+
+            SOD = current_best_solution[0]*current_best_solution[1];
+            SDD = current_best_solution[1];
+            setXRayParameters(SOD, SDD);
+
+            current_objective_value = objective_value;
+            best_solution = copy.deepcopy(current_best_solution);
+
+            if param != 'Distance':
+
+                setLocalTransformationMatrixSet(matrix_set);
+
+                updateLocalTransformationMatrixSet(best_finger, param);
+        overall_computing_time += computing_time;
+
+    SOD = best_solution[0]*best_solution[1];
+    SDD = best_solution[1];
+    setXRayParameters(SOD, SDD);
+    pred_image = x_ray_image = gvxr.computeXRayImage();
+    pred_image = preprocessing.scale(pred_image);
+    plt.imsave("./00382-s1-neg2/MAE-adaptive/EA-%d" % (run+1), pred_image, cmap='Greys_r');
+
+    MAE = mean_absolute_error(target_image, pred_image);
+    ZNCC = zero_mean_normalised_cross_correlation(target_image, pred_image);
+    row = [[best_solution, MAE, ZNCC, overall_computing_time]];
+    df2 = pd.DataFrame(row, columns=['Parameters','MAE', 'ZNCC', 'Time']);
+    df = df.append(df2, ignore_index=True);
+
+    error_map_EA = abs(target_image-pred_image);
+    plt.imsave("./00382-s1-neg2/MAE-adaptive/error-map-EA-%d.png" % (run+1), error_map_EA, cmap='Greys_r');
+
+    width, height = target_image.shape;
+    correlation_map_EA = np.zeros((width, height));
+    for w in range(width):
+        for h in range(height):
+
+            correlation_map_EA[w][h] = target_image[w][h]*pred_image[w][h];
+
+    plt.imsave("./00382-s1-neg2/MAE-adaptive/correlation-map-EA-%d.png" % (run+1) , correlation_map_EA, cmap='Greys_r');
+
+    setLocalTransformationMatrixSet(matrix_set_original);
+
+df.to_csv("./00382-s1-neg2/MAE-adaptive/results.csv");
+
+
+
+
 
 # pred_image, df3 = display_metrics(method, optimiser.best_solution.parameter_set, target_image, computing_time);
 # plt.imsave("./hyperparameter-tuning/EA-%d-%d.png" % (g_number_of_individuals, g_iterations), pred_image, cmap='Greys_r');

@@ -189,7 +189,7 @@ class HandFunction(ObjectiveFunction):
                 self.boundaries.append([-20, 0]);
                 self.boundaries.append([-20, 0]);
 
-        super().__init__(len(self.boundaries),
+        super().__init__(self.number_of_dimensions,
                          self.boundaries,
                          self.objectiveFunction,
                          1);

@@ -28,10 +28,10 @@ class PureRandomSearch:
         self.number_of_angles = 22;
 
         if self.flag == 0:
-            self.objective_value = 1;
+            self.fvalue = 0;
             print("Minimising...");
         elif self.flag == 1:
-            self.objective_value = 0;
+            self.fvalue = 1;
             print("Maximising...");
         else:
             raise NotImplementedError("0 for minimisation and 1 for maximisation");
@@ -39,6 +39,8 @@ class PureRandomSearch:
         # Initialise temporary and final solution sets
         self.best_solution = [];
         self.current_solution = [];
+        self.current_objective_value = 0;
+        self.best_objective_value = 1000;
         for i in range(self.number_of_dimensions):
             self.current_solution.append(0);
             self.best_solution.append(0);
@@ -58,22 +60,26 @@ class PureRandomSearch:
                                                                         self.boundaries[j+self.number_of_distances][0],
                                                                         self.boundaries[j+self.number_of_distances][1]);
 
-            self.best_objective_value = self.objective_function.objectiveFunction(self.current_solution);
+            self.current_objective_value = self.objective_function.objectiveFunction(self.current_solution);
+            # print(self.current_solution);
+            print(self.current_objective_value);
+            print(self.best_objective_value);
 
-            if self.objective_value == 1:
+            if self.fvalue == 1:
 
-                if self.best_objective_value < self.objective_value:
+                if self.best_objective_value < self.current_objective_value:
 
-                    self.objective_value = self.best_objective_value;
+                    self.best_objective_value = self.current_objective_value;
 
                     for m in range(self.number_of_dimensions):
                         self.best_solution[m] = self.current_solution[m];
+                        print(self.best_solution);
 
-            elif self.objective_value == 0:
+            elif self.fvalue == 0:
 
-                if self.best_objective_value > self.objective_value:
+                if self.current_objective_value < self.best_objective_value:
 
-                    self.objective_value = self.best_objective_value;
+                    self.best_objective_value = self.current_objective_value;
 
                     for m in range(self.number_of_dimensions):
                         self.best_solution[m] = self.current_solution[m];

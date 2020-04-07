@@ -70,6 +70,7 @@ def setXRayEnvironment():
     gvxr.disableArtefactFiltering();
     gvxr.rotateNode('root', -90, 1, 0, 0);
 
+
 class DistanceAndRootFunction(ObjectiveFunction):
 
     def __init__(self, aTargetImage):
@@ -178,16 +179,16 @@ class HandFunction(ObjectiveFunction):
             self.boundaries.append([-20, 20]);
             self.boundaries.append([-20, 20]);
 
-            self.boundaries.append([-20, 0]);
             self.boundaries.append([-20, 20]);
-            self.boundaries.append([-5, 5]);
+            self.boundaries.append([-90, 0]);
+            self.boundaries.append([-20, 20]);
 
             while len(self.boundaries) < self.number_of_dimensions:
 
-                self.boundaries.append([-5, 5]);
-                self.boundaries.append([-20, 0]);
-                self.boundaries.append([-20, 0]);
-                self.boundaries.append([-20, 0]);
+                self.boundaries.append([-20, 20]);
+                self.boundaries.append([-90, 0]);
+                self.boundaries.append([-90, 0]);
+                self.boundaries.append([-90, 0]);
 
         super().__init__(self.number_of_dimensions,
                          self.boundaries,
@@ -214,11 +215,15 @@ class HandFunction(ObjectiveFunction):
                 angle_list.append(aSolution[i+self.number_of_distances]);
 
             while len(angle_list) < 22:
-                angle_list.append(0.)
+                angle_list.append(0.);
 
             pred_image = bone_rotation(angle_list, 'All');
 
         MAE = mean_absolute_error(self.target_image, pred_image);
+        # RMSE = root_mean_squared_error(self.target_image, pred_image);
+        # SSIM = structural_similarity(self.target_image, pred_image);
+        # RE = relative_error(self.target_image, pred_image);
+        # ZNCC = zero_mean_normalised_cross_correlation(self.target_image, pred_image);
 
         return MAE
 

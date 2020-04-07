@@ -12,16 +12,19 @@ import matplotlib.pyplot as plt
 from HandFunction import *
 from RotateBones import *
 
+
 setXRayEnvironment();
 
-plt.imsave("./00382-s1-neg2/NSGA-II-1000/target.png", target_image, cmap='Greys_r');
+average_hand();
+
+# plt.imsave("./02212-2-right/NSGA-II-rescaled-sobel/MAE-SSIM/target.png", target_image, cmap='Greys_r');
 
 # problems to be solved
 problem = MHR();
 
 # Using NSGA II
 algorithm = NSGA2(
-    pop_size=1000,
+    pop_size=200,
     eliminate_duplicates=True
     );
 
@@ -30,7 +33,7 @@ start = time.time();
 # Set up an optimiser
 res = minimize(problem,
                algorithm,
-               ('n_gen', 1000),
+               ('n_gen', 200),
                seed=1,
                verbose=True);
 end = time.time();
@@ -48,13 +51,22 @@ for r in range(len(res.X[:,0])):
         best_angle.append(res.X[r, a+number_of_distances]);
 
     pred_image = bone_rotation(best_angle, 'All');
-    plt.imsave("./00382-s1-neg2/NSGA-II-1000/pred-%d.png" % r, pred_image, cmap='Greys_r');
+    plt.imsave("./02212-2-right/NSGA-II-rescaled-sobel/MAE-SSIM/pred-%d.png" % r, pred_image, cmap='Greys_r');
 
-    ZNCC = -res.F[r,1];
+    # MAE = res.F[r,0];
+    # RMSE = res.F[r,1];
+    # NRMSE = res.F[r,2];
+    # ZNCC = -res.F[r,3];
+    # SSIM = -res.F[r,4];
+    # PSNR = -res.F[r,5];
+
     MAE = res.F[r,0];
+    SSIM = -res.F[r,1];
+    # ZNCC = -res.F[r, 1];
+    ZNCC = zero_mean_normalised_cross_correlation(target_image, pred_image);
     RMSE = root_mean_squared_error(target_image, pred_image);
     NRMSE = normalised_root_mean_squared_error(target_image, pred_image);
-    SSIM = structural_similarity(target_image, pred_image);
+    # SSIM = structural_similarity(target_image, pred_image);
     PSNR = peak_signal_to_noise_ratio(target_image, pred_image);
 
     row = [[r, res.X[r,:], MAE, RMSE, NRMSE, ZNCC, SSIM, PSNR, total_time]]
@@ -62,8 +74,8 @@ for r in range(len(res.X[:,0])):
     df = df.append(df2, ignore_index=True);
 
     error_map = abs(target_image-pred_image);
-    plt.imsave("./00382-s1-neg2/NSGA-II-1000/error-map-%d.png" % r, error_map, cmap='Greys_r');
+    plt.imsave("./02212-2-right/NSGA-II-rescaled-sobel/MAE-SSIM/error-map-%d.png" % r, error_map, cmap='Greys_r');
 
     correlation_map = target_image*pred_image;
-    plt.imsave("./00382-s1-neg2/NSGA-II-1000/correlation-map-%d.png" % r, correlation_map, cmap='Greys_r');
-df.to_csv("./00382-s1-neg2/NSGA-II-1000/results.csv" );
+    plt.imsave("./02212-2-right/NSGA-II-rescaled-sobel/MAE-SSIM/correlation-map-%d.png" % r, correlation_map, cmap='Greys_r');
+df.to_csv("./02212-2-right/NSGA-II-rescaled-sobel/MAE-SSIM/results.csv" );

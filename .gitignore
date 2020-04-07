@@ -1,12 +1,34 @@
-# Test on real X-ray images
+# Ignore results
+00382-s1-neg1/
 00382-s1-neg2/
 00382-s1-neg3/
+03875-s1-neg3/
+02212-2-right/
+02212-2-left/
+00135-s1-neg2/
+posterior-anterior/
+
+# Ignore input data
+front-view/
+hog-data/
+x-ray-hand/
 
 # Ignore cache
 __pycache__
 
-# Ignore result folder
-posterior-anterior/
-
 # Ignore local files
 absError.py
+HOG.py
+flip-image.py
+prediction.text
+
+# Ignore some input images
+00135-s1-neg2.png
+00262-s1-2.png
+00382-s1-neg1.png
+#02212-2-left.png
+#02212-2-right.png
+03875-s1-neg3.png
+
+# Ignore archive files
+archive/

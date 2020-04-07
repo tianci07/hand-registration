@@ -100,6 +100,33 @@ def updateLocalTransformationMatrixSet(angles,  finger):
             gvxr.rotateNode('node-Lit_Prox', angles[19], 0, 1, 0);
             gvxr.rotateNode('node-Lit_Midd', angles[20], 0, 1, 0);
             gvxr.rotateNode('node-Lit_Dist', angles[21], 0, 1, 0);
+
+def average_hand():
+    # re-scale Thumb
+    gvxr.scaleNode('node-Thu_Prox', 1, 1, 1.086, 'mm');
+    gvxr.scaleNode('node-Thu_Dist', 1, 1, 0.897, 'mm');
+
+    # re-scale Index
+    gvxr.scaleNode('node-Ind_Prox', 1, 1, 0.969, 'mm');
+    gvxr.scaleNode('node-Ind_Midd', 1, 1, 1.065, 'mm');
+    gvxr.scaleNode('node-Ind_Dist', 1, 1, 1.141, 'mm');
+
+    # re-scale Middle
+    gvxr.scaleNode('node-Mid_Prox', 1, 1, 0.962, 'mm');
+    gvxr.scaleNode('node-Mid_Midd', 1, 1, 1.080, 'mm');
+    gvxr.scaleNode('node-Mid_Dist', 1, 1, 1.053, 'mm');
+
+    # re-scale Ring
+    gvxr.scaleNode('node-Thi_Prox', 1, 1, 1.017, 'mm');
+    gvxr.scaleNode('node-Thi_Midd', 1, 1, 1.084, 'mm');
+    gvxr.scaleNode('node-Thi_Dist', 1, 1, 1.056, 'mm');
+
+    # re-scale Little
+    gvxr.scaleNode('node-Lit_Prox', 1, 1, 1.034, 'mm');
+    gvxr.scaleNode('node-Lit_Midd', 1, 1, 1.126, 'mm');
+    gvxr.scaleNode('node-Lit_Dist', 1, 1, 1.070, 'mm');
+
+
 # def updateLocalTransformationMatrixSet(angles):
 #         gvxr.rotateNode('root', angles[0], 1, 0, 0);
 #         gvxr.rotateNode('root', angles[1], 0, 1, 0);
@@ -181,8 +208,10 @@ def bone_rotation(angles, finger):
         updateLocalTransformationMatrixSet(angles, finger);
 
     x_ray_image = gvxr.computeXRayImage();
-    # image = np.array(x_ray_image);
-    image = preprocessing.scale(x_ray_image);
+    image = np.array(x_ray_image);
+    image = (image-image.mean())/image.std();
+    image[np.isnan(image)]=0.;
+    image[image > 1E308] = 0.;
 
     setLocalTransformationMatrixSet(matrix_set);
 

@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import argparse
 import os
+import medpy.io
 
 from HandFunction import *
 # Selection operators
@@ -78,6 +79,7 @@ def plot(target, prediction, aParameter, anIteration):
     # plt.imsave("./00382-s1-neg2/MAE-restart/correlation-%s-%d.png" % (param, i+1) , correlation_map, cmap='Greys_r');
 
     temp_df = df_2.T;
+
     plt.subplot(gs[1, 0:2]);
     plt.title("MAE: %.4f" % MAE);
     plt.plot(temp_df.loc['MAE'], 'b-', label='MAE');
@@ -94,13 +96,21 @@ def plot(target, prediction, aParameter, anIteration):
 
     plt.close('all');
 
+def dataFrameToFloat(aString):
+    string = aString.replace("[", "");
+    string = string.replace("]", "");
+    to_float = np.fromstring(string, dtype=float, sep=",")
+
+    return to_float
+
 parser = argparse.ArgumentParser();
 
 parser.add_argument("--target", help="Input file name", required=True);
 parser.add_argument("--output", help="Path to output folder", required=True);
 parser.add_argument("--restart", help="Restart times", type=int, required=True);
 
-parser.add_argument("--initial_guess", help="Initial guess", nargs='*');
+parser.add_argument("--initial_guess", help="Initial guess");
+parser.add_argument("--results_csv", help="Result csv files");
 parser.add_argument("--plot_metrics", help="Plot metrics during optimisation");
 
 parser.add_argument("--parameters", help="Number of parameters to optimise", type=int, required=True);
@@ -121,7 +131,13 @@ setXRayEnvironment();
 
 # target_image = cv2.imread("./00382-s1-neg2.png", 0);
 target_image = cv2.imread(args.target, 0);
-target_image = preprocessing.scale(target_image);
+target_image = (target_image-target_image.mean())/target_image.std();
+target_image[np.isnan(target_image)]=0.;
+target_image[target_image > 1E308] = 0.;
+np.savetxt(args.output +"/target.txt", target_image);
+
+plt.imsave(args.output + "/target.png", target_image, cmap='Greys_r');
+medpy.io.save(target_image, args.output + "/target.mha");
 
 if not os.path.exists(args.output):
     os.mkdir(args.output);
@@ -142,14 +158,15 @@ d = 2;
 overall_computing_time = 0;
 j=1;
 temp_best_solution=[];
-start = time.time();
 
 # Optimising whole hand
 if args.initial_guess:
+    # initial_guess = [];
+    initial_guess = pd.read_csv(args.results_csv, usecols=['Parameters']);
+    initial_guess = dataFrameToFloat(initial_guess['Parameters'][0]);
 
-    initial_guess =[];
-    for ini in range(len(args.initial_guess)):
-        initial_guess.append(float(args.initial_guess[ini]));
+    # for ini in range(len(args.initial_guess)):
+    #     initial_guess.append(float(args.initial_guess[ini]));
     param = 'All';
 
     g_number_of_individuals = args.individuals;
@@ -157,8 +174,6 @@ if args.initial_guess:
 
     g_max_mutation_sigma = args.max_mutation_sigma;
     g_min_mutation_sigma = args.min_mutation_sigma;
-
-    start = time.time();
 
     objective_function = HandFunction(target_image, number_of_params);
     optimiser = EvolutionaryAlgorithm(objective_function, g_number_of_individuals, initial_guess=initial_guess);
@@ -183,11 +198,16 @@ if args.initial_guess:
         # Set the mutation variance
         gaussian_mutation.setMutationVariance(sigma);
 
+        start = time.time();
         # Run the optimisation loop
         optimiser.runIteration();
 
         # Print the current state in the console
         optimiser.printCurrentStates(i + 1);
+
+        end=time.time();
+        computing_time = end-start;
+        overall_computing_time += computing_time;
 
         if args.plot_metrics:
 
@@ -204,11 +224,20 @@ if args.initial_guess:
                 best_angle.append(temp_best_solution[a+number_of_distances]);
 
             temp_image = bone_rotation(best_angle, 'All');
+            temp_fname = "/EA-%d.png" % j;
+            plt.imsave(ind_folder+temp_fname, temp_image, cmap='Greys_r');
+            np.savetxt(ind_folder+"/EA-%d.txt" % j, temp_image);
+            gvxr.saveLastXRayImage(ind_folder+"/EA-%d.mha" % j);
 
-            MAE = temp_objective;
             ZNCC = zero_mean_normalised_cross_correlation(target_image, temp_image);
-            row = [[temp_best_solution, MAE, ZNCC]];
-            df2 = pd.DataFrame(row, columns=['Parameters','MAE', 'ZNCC']);
+            MAE = temp_objective;
+            RMSE = root_mean_squared_error(target_image, temp_image);
+            NRMSE = normalised_root_mean_squared_error(target_image, temp_image);
+            SSIM = structural_similarity(target_image, temp_image);
+            PSNR = peak_signal_to_noise_ratio(target_image, temp_image);
+
+            row = [[temp_fname, overall_computing_time, temp_best_solution, MAE, RMSE, NRMSE, SSIM, ZNCC, PSNR]];
+            df2 = pd.DataFrame(row, columns=['Image name', 'Time', 'Parameters', 'MAE', 'RMSE', 'NRMSE', 'SSIM', 'ZNCC', 'PSNR']);
             df_2 = df_2.append(df2, ignore_index=True);
 
             plot(target_image, temp_image, param, j);
@@ -278,11 +307,16 @@ else:
             # Set the mutation variance
             gaussian_mutation.setMutationVariance(sigma);
 
+            start = time.time();
             # Run the optimisation loop
             optimiser.runIteration();
 
             # Print the current state in the console
             optimiser.printCurrentStates(i + 1);
+
+            end=time.time();
+            computing_time = end-start;
+            overall_computing_time += computing_time;
 
             if args.plot_metrics:
 
@@ -291,7 +325,7 @@ else:
                 SDD = temp_best_solution[1];
                 setXRayParameters(SOD, SDD);
 
-                temp_objective = -optimiser.best_solution.objective;
+                temp_objective = optimiser.best_solution.objective;
                 best_angle = [];
                 if param != 'Distance':
 
@@ -302,18 +336,25 @@ else:
                     best_angle.append(0.)
 
                 temp_image = bone_rotation(best_angle, 'All');
+                temp_fname = "/EA-%d.png" % j;
+                plt.imsave(ind_folder+temp_fname, temp_image, cmap='Greys_r');
+                np.savetxt(ind_folder+"/EA-%d.txt" % j, temp_image);
+                gvxr.saveLastXRayImage(ind_folder+"/EA-%d.mha" % j);
 
-                MAE = temp_objective;
-                ZNCC = zero_mean_normalised_cross_correlation(target_image, temp_image);
-                row = [[temp_best_solution, MAE, ZNCC]];
-                df2 = pd.DataFrame(row, columns=['Parameters','MAE', 'ZNCC']);
+                ZNCC = temp_objective;
+                MAE = mean_absolute_error(target_image, temp_image);
+                RMSE = root_mean_squared_error(target_image, temp_image);
+                NRMSE = normalised_root_mean_squared_error(target_image, temp_image);
+                SSIM = structural_similarity(target_image, temp_image);
+                PSNR = peak_signal_to_noise_ratio(target_image, temp_image);
+
+                row = [[param, temp_fname, overall_computing_time, temp_best_solution, MAE, RMSE, NRMSE, SSIM, ZNCC, PSNR]];
+                df2 = pd.DataFrame(row, columns=['Optimising', 'Image name', 'Time', 'Parameters','MAE', 'RMSE', 'NRMSE', 'SSIM', 'ZNCC', 'PSNR']);
                 df_2 = df_2.append(df2, ignore_index=True);
 
                 plot(target_image, temp_image, param, j);
                 j+=1;
 
-end=time.time();
-computing_time = end-start;
 
 best_solution = copy.deepcopy(optimiser.best_solution.parameter_set);
 
@@ -325,11 +366,17 @@ for a in range(number_of_angles):
 
 pred_image = bone_rotation(best_angle, 'All');
 plt.imsave(args.output + "/EA-%d.png" % args.restart, pred_image, cmap='Greys_r');
+# np.savetxt(args.output + "/EA-%d.txt" % args.restart, pred_image);
 
-MAE = -optimiser.best_solution.objective;
 ZNCC = zero_mean_normalised_cross_correlation(target_image, pred_image);
-row = [[best_solution, MAE, ZNCC, overall_computing_time]];
-df2 = pd.DataFrame(row, columns=['Parameters', 'MAE', 'ZNCC', 'Time']);
+MAE = -optimiser.best_solution.objective;
+RMSE = root_mean_squared_error(target_image, pred_image);
+NRMSE = normalised_root_mean_squared_error(target_image, pred_image);
+SSIM = structural_similarity(target_image, pred_image);
+PSNR = peak_signal_to_noise_ratio(target_image, pred_image);
+
+row = [[best_solution, MAE, RMSE, NRMSE, SSIM, ZNCC, PSNR, overall_computing_time]];
+df2 = pd.DataFrame(row, columns=['Parameters','MAE', 'RMSE', 'NRMSE', 'SSIM', 'ZNCC', 'PSNR', 'Time']);
 df = df.append(df2, ignore_index=True);
 
 error_map = abs(target_image-pred_image);
